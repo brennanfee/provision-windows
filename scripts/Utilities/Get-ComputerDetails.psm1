@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-Returns some details on the given machine(s).  Includes whether the machine is virtual and/or a laptop.
+Returns some details on the given machine.  Includes whether the machine is virtual and/or a laptop.
 .DESCRIPTION
-Uses wmi (along with any optional credentials) to gather some key information on a computer, possibly remove, or a list
-of computers.  Along with whether or not the machine is a virtual it attempts to return which virtual platform is used.
+Uses wmi (along with any optional credentials) to gather some key information on a computer, possibly remote.
+Along with whether or not the machine is a virtual it attempts to return which virtual platform is used.
 In situations where the machine is physical, attempts to determine if the machine is a laptop.
 .PARAMETER ComputerName
 Computer or IP address of machine
@@ -11,17 +11,16 @@ Computer or IP address of machine
 Provide an alternate credential
 .EXAMPLE
 $Credential = Get-Credential
-Get-ComputerDetails 'Server1','Server2' -Credential $Credential | select ComputerName,IsVirtual,VirtualType | ft
+Get-ComputerDetails 'Server1' -Credential $Credential | select ComputerName,IsVirtual,VirtualType | ft
 Description:
 ------------------
-Using an alternate credential, determine if server1 and server2 are virtual. Return the results along with the type of virtual machine it might be.
+Using an alternate credential, determine if server1 is virtual. Return the results along with the type of virtual machine it might be.
 .EXAMPLE
 (Get-ComputerDetails server1).IsVirtual
 Description:
 ------------------
 Determine if server1 is virtual and returns either true or false.
-.LINK  
-.LINK  
+.LINK
 https://www.linkedin.com/in/brennanfee
 .NOTES
 Name       : Get-ComputerDetails
@@ -36,116 +35,104 @@ param(
     [parameter(HelpMessage="Pass an alternate credential")]
     [System.Management.Automation.PSCredential]$Credential = $null
 )
-begin
+
+$wmibios = @()
+$wmisystem = @()
+
+try
 {
-    $results = @()
-    $computernames = @()
-    $wmibios = @()
-    $wmisystem = @()
-}
-process
-{
-    $computernames += $ComputerName
-}
-end
-{
-    foreach($computer in $computernames)
+    if ($Credential -ne $null)
     {
-        try
+        $wmibios = Get-WmiObject -Class Win32_BIOS -ComputerName $V -Credential $Credential -ErrorAction Stop | Select-Object version,serialnumber
+        $wmisystem = Get-WmiObject -Class Win32_ComputerSystem -ComputerName $ComputerName -Credential $Credential -ErrorAction Stop | Select-Object name,model,manufacturer,pcsystemtype
+    }
+    else
+    {
+        $wmibios = Get-WmiObject -Class Win32_BIOS -ComputerName $ComputerName -ErrorAction Stop | Select-Object version,serialnumber
+        $wmisystem = Get-WmiObject -Class Win32_ComputerSystem -ComputerName $ComputerName -ErrorAction Stop | Select-Object name,model,manufacturer,pcsystemtype
+    }
+
+    $ResultProps = @{
+        ComputerName = $wmisystem.name
+        BIOSVersion = $wmibios.Version
+        SerialNumber = $wmibios.serialnumber
+        Manufacturer = $wmisystem.manufacturer
+        Model = $wmisystem.model
+        IsLaptop = $false
+        IsVirtual = $false
+        VirtualType = $null
+    }
+
+    if ($wmisystem.pcsystemtype -eq 2)
+    {
+        $ResultProps.IsLaptop = $true
+    }
+
+    if ($wmibios.SerialNumber -like "*VMware*")
+    {
+        $ResultProps.IsVirtual = $true
+        $ResultProps.VirtualType = "VMWare"
+    }
+    else
+    {
+        switch -wildcard ($wmibios.Version)
         {
-            if ($Credential -ne $null)
-            {
-                $wmibios = Get-WmiObject -Class Win32_BIOS -ComputerName $computer -Credential $Credential -ErrorAction Stop | Select-Object version,serialnumber
-                $wmisystem = Get-WmiObject -Class Win32_ComputerSystem -ComputerName $computer -Credential $Credential -ErrorAction Stop | Select-Object name,model,manufacturer,pcsystemtype
-            }
-            else
-            {
-                $wmibios = Get-WmiObject -Class Win32_BIOS -ComputerName $computer -ErrorAction Stop | Select-Object version,serialnumber
-                $wmisystem = Get-WmiObject -Class Win32_ComputerSystem -ComputerName $computer -ErrorAction Stop | Select-Object name,model,manufacturer,pcsystemtype
-            }
-
-            $ResultProps = @{
-                ComputerName = $wmisystem.name
-                BIOSVersion = $wmibios.Version
-                SerialNumber = $wmibios.serialnumber
-                Manufacturer = $wmisystem.manufacturer
-                Model = $wmisystem.model
-                IsLaptop = $false
-                IsVirtual = $false
-                VirtualType = $null
-            }
-
-            if ($wmisystem.pcsystemtype -eq 2)
-            {
-                $ResultProps.IsLaptop = $true
-            }
-
-            if ($wmibios.SerialNumber -like "*VMware*")
+            'VIRTUAL'
             {
                 $ResultProps.IsVirtual = $true
-                $ResultProps.VirtualType = "VMWare"
+                $ResultProps.VirtualType = "Hyper-V"
             }
-            else
+            'A M I'
             {
-                switch -wildcard ($wmibios.Version)
-                {
-                    'VIRTUAL'
-                    {
-                        $ResultProps.IsVirtual = $true
-                        $ResultProps.VirtualType = "Hyper-V"
-                    }
-                    'A M I'
-                    {
-                        $ResultProps.IsVirtual = $true
-                        $ResultProps.VirtualType = "Virtual PC"
-                    }
-                    '*Xen*'
-                    {
-                        $ResultProps.IsVirtual = $true
-                        $ResultProps.VirtualType = "Xen"
-                    }
-                    '*VBOX*'
-                    {
-                        $ResultProps.IsVirtual = $true
-                        $ResultProps.VirtualType = "VirtualBox"
-                    }                    
-                }
+                $ResultProps.IsVirtual = $true
+                $ResultProps.VirtualType = "Virtual PC"
             }
-
-            if (-not $ResultProps.IsVirtual)
+            '*Xen*'
             {
-                if ($wmisystem.manufacturer -like "*Microsoft*")
-                {
-                    $ResultProps.IsVirtual = $true
-                    $ResultProps.VirtualType = "Hyper-V"
-                }
-                elseif ($wmisystem.manufacturer -like "*VMWare*")
-                {
-                    $ResultProps.IsVirtual = $true
-                    $ResultProps.VirtualType = "VMWare"
-                }
-                elseif ($wmisystem.model -eq "VirtualBox")
-                {
-                    $ResultProps.IsVirtual = $true
-                    $ResultProps.VirtualType = "VirtualBox"
-                }
-                elseif ($wmisystem.model -eq "KVM")
-                {
-                    $ResultProps.IsVirtual = $true
-                    $ResultProps.VirtualType = "KVM"
-                }
-                elseif ($wmisystem.model -like "*Virtual*")
-                {
-                    $ResultProps.IsVirtual = $true
-                    $ResultProps.VirtualType = "Unknown"
-                }
+                $ResultProps.IsVirtual = $true
+                $ResultProps.VirtualType = "Xen"
             }
-            $results += New-Object PsObject -Property $ResultProps
-        }
-        catch
-        {
-            Write-Warning "Cannot connect to $computer"
+            '*VBOX*'
+            {
+                $ResultProps.IsVirtual = $true
+                $ResultProps.VirtualType = "VirtualBox"
+            }
         }
     }
-    return $results
+
+    if (-not $ResultProps.IsVirtual)
+    {
+        if ($wmisystem.manufacturer -like "*Microsoft*")
+        {
+            $ResultProps.IsVirtual = $true
+            $ResultProps.VirtualType = "Hyper-V"
+        }
+        elseif ($wmisystem.manufacturer -like "*VMWare*")
+        {
+            $ResultProps.IsVirtual = $true
+            $ResultProps.VirtualType = "VMWare"
+        }
+        elseif ($wmisystem.model -eq "VirtualBox")
+        {
+            $ResultProps.IsVirtual = $true
+            $ResultProps.VirtualType = "VirtualBox"
+        }
+        elseif ($wmisystem.model -eq "KVM")
+        {
+            $ResultProps.IsVirtual = $true
+            $ResultProps.VirtualType = "KVM"
+        }
+        elseif ($wmisystem.model -like "*Virtual*")
+        {
+            $ResultProps.IsVirtual = $true
+            $ResultProps.VirtualType = "Unknown"
+        }
+    }
+
+    return New-Object PsObject -Property $ResultProps
+}
+catch
+{
+    Write-Warning "Cannot connect to $computer"
+    return @()
 }

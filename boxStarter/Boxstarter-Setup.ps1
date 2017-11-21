@@ -7,39 +7,41 @@ $Boxstarter.RebootOk=$true
 # Download some helper scripts, these will stay permanantly on the machine
 # I put these files into two locations, one is only for provision scripts the other is for shared powershell scripts.
 
+# URL: http://boxstarter.org/package/url?https://git.io/vF5zn
+
 Update-ExecutionPolicy -Policy Unrestricted
 
 # Set up some global variables
-$scriptRoot = "$env:ALLUSERSPROFILE\provision-windows"
-$outputPath = "$scriptRoot\output"
-$scriptPath = "$scriptRoot\scripts"
-
-Import-Module -DisableNameChecking "$scriptRoot\Utilities\Get-ComputerDetails.psm1"
-$computerDetails = Get-ComputerDetails
+$extractRoot = "$env:ALLUSERSPROFILE\provision-windows"
+$outputPath = "$extractRoot\output"
+$scriptPath = "$extractRoot\provision-windows-master\scripts"
 
 ### Phase 1 - Download and extract the scripts
-if (!(Test-Path "$env:ALLUSERSPROFILE\provision-windows\README.md")) {
+if (!(Test-Path "$extractRoot\provision-windows-master\README.md")) {
     # Download the master branch
     $zipFile = "$env:TEMP\provision-windows.zip"
     iwr https://github.com/brennanfee/provision-windows/archive/master.zip -UseBasicParsing -o $zipFile
 
     # Extract it
-    Expand-Archive $zipFile -DestinationPath $scriptRoot
+    Expand-Archive $zipFile -DestinationPath $extractRoot
 
     # Create the output directory
     New-Item $outputPath -ItemType Directory -Force
 }
+
+Import-Module -DisableNameChecking "$scriptPath\Utilities\Get-ComputerDetails.psm1"
+$computerDetails = Get-ComputerDetails
 
 ### Phase 2 - Install the optional windows features
 if (!(Test-Path "$outputPath\reboot-features.txt")) {
     Write-BoxstarterMessage "Installing Windows Features"
 
     # Do this before running updates so updates to these will be included
-    
+
     # The boxstarter commands
     Enable-RemoteDesktop
     Enable-MicrosoftUpdate
-    
+
     # My list of features
     & "$scriptPath\Installs\Install-Optional-Windows-Features.ps1" -Configuration Developer
 
@@ -49,7 +51,7 @@ if (!(Test-Path "$outputPath\reboot-features.txt")) {
 
 ### Phase 3 - Run Windows Updates
 if (!(Test-Path "$outputPath\reboot-updates.txt")) {
-    Write-BoxstarterMessage "Install Windows Updates"    
+    Write-BoxstarterMessage "Install Windows Updates"
     Install-WindowsUpdate -AcceptEula
     if(Test-PendingReboot){ Invoke-Reboot }
 
@@ -120,7 +122,7 @@ if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
     Get-ChildItem "$scriptPath\Bloat" -File -Filter "*.ps1" | Sort-Object "FullName" | Foreach-Object {
         & "$_.FullName"
     }
-    
+
     New-Item "$outputPath\reboot-bloat.txt" -type file
     Invoke-Reboot
 }
