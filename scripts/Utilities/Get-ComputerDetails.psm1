@@ -28,7 +28,9 @@ Version    : 1.0.0 11/11/2017 Brennan Fee
                 - First release
 Author     : Brennan Fee
 #>
+
 [cmdletBinding(SupportsShouldProcess = $true)]
+function Get-ComputerDetails {
 param(
     [parameter(Position=0, ValueFromPipeline=$true, HelpMessage="Computer or IP address of machine to test")]
     [string[]]$ComputerName = $env:COMPUTERNAME,
@@ -135,4 +137,6 @@ catch
 {
     Write-Warning "Cannot connect to $computer"
     return @()
+}
+
 }
