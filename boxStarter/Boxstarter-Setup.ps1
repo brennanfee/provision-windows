@@ -12,7 +12,7 @@ $Boxstarter.RebootOk=$true
 Update-ExecutionPolicy -Policy Unrestricted
 
 # Set up some global variables
-$debug = $true
+$debug = $false
 $extractRoot = "$env:ALLUSERSPROFILE\provision-windows"
 $outputPath = "$extractRoot\output"
 $scriptPath = "$extractRoot\provision-windows-master\scripts"
@@ -116,7 +116,7 @@ if (!(Test-Path "$outputPath\reboot-configurations.txt")) {
         $script = $_.FullName
         Write-BoxstarterMessage "Running script: $script"
         & "$script" *> "$outputPath\log-settings-$_.log"
-        Start-Sleep 10
+        Start-Sleep 3
     }
 
     New-Item "$outputPath\reboot-configurations.txt" -type file
@@ -131,7 +131,7 @@ if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
         $script = $_.FullName
         Write-BoxstarterMessage "Running script: $script"
         & "$script" *> "$outputPath\log-bloat-$_.log"
-        Start-Sleep 10
+        Start-Sleep 3
     }
 
     New-Item "$outputPath\reboot-bloat.txt" -type file

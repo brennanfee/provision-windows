@@ -23,6 +23,7 @@ function Pin-App
     }
 }
 
+Pin-App "Store" -unpin
 Pin-App "Microsoft Store" -unpin
 Pin-App "Microsoft Edge" -unpin
 Pin-App "Skype" -unpin

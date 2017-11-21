@@ -23,6 +23,7 @@ function Pin-TaskbarApp
     }
 }
 
+Pin-TaskbarApp "Store" -unpin
 Pin-TaskbarApp "Microsoft Store" -unpin
 Pin-TaskbarApp "Mail" -unpin
 
