@@ -12,6 +12,7 @@ $Boxstarter.RebootOk=$true
 Update-ExecutionPolicy -Policy Unrestricted
 
 # Set up some global variables
+$debug = $true
 $extractRoot = "$env:ALLUSERSPROFILE\provision-windows"
 $outputPath = "$extractRoot\output"
 $scriptPath = "$extractRoot\provision-windows-master\scripts"
@@ -32,35 +33,39 @@ if (!(Test-Path "$extractRoot\provision-windows-master\README.md")) {
 Import-Module -DisableNameChecking "$scriptPath\Utilities\Get-ComputerDetails.psm1"
 $computerDetails = Get-ComputerDetails
 
-### Phase 2 - Install the optional windows features
-if (!(Test-Path "$outputPath\reboot-features.txt")) {
-    Write-BoxstarterMessage "Installing Windows Features"
-
-    # Do this before running updates so updates to these will be included
-
+### Phase 2 - Run Windows Updates
+if (!(Test-Path "$outputPath\reboot-updates.txt")) {
     # The boxstarter commands
     Enable-RemoteDesktop
     Enable-MicrosoftUpdate
 
+    Write-BoxstarterMessage "Install Windows Updates"
+    Install-WindowsUpdate -AcceptEula
+    if(Test-PendingReboot){ Invoke-Reboot }
+
+    New-Item "$outputPath\reboot-updates.txt" -type file
+    Invoke-Reboot
+}
+
+### Phase 3 - Install the optional windows features
+if (!(Test-Path "$outputPath\reboot-features.txt")) {
+    Write-BoxstarterMessage "Installing Windows Features"
+
     # My list of features
-    & "$scriptPath\Installs\Install-Optional-Windows-Features.ps1" -Configuration Developer
+    & "$scriptPath\Installs\Install-Optional-Windows-Features.ps1" -Configuration Developer *> "$outputPath\log-features.log"
 
     New-Item "$outputPath\reboot-features.txt" -type file
     Invoke-Reboot
 }
 
-### Phase 3 - Run Windows Updates
-if (!(Test-Path "$outputPath\reboot-updates.txt")) {
+### Phase 4 - Run Windows Updates (again)
+if (!(Test-Path "$outputPath\reboot-updates-final.txt")) {
+    # Running again in case there were updates for the installed features
     Write-BoxstarterMessage "Install Windows Updates"
     Install-WindowsUpdate -AcceptEula
     if(Test-PendingReboot){ Invoke-Reboot }
 
-    # Another round of windows updates, in case installed applications have windows updates (like IIS, .NET)
-    Write-BoxstarterMessage "Install Windows Updates (Post Application Installs)"
-    Install-WindowsUpdate -AcceptEula
-    if(Test-PendingReboot){ Invoke-Reboot }
-
-    New-Item "$outputPath\reboot-updates.txt" -type file
+    New-Item "$outputPath\reboot-updates-final.txt" -type file
     Invoke-Reboot
 }
 
@@ -71,7 +76,7 @@ if (!(Test-Path "$outputPath\reboot-virtualization.txt")) {
     if ($computerDetails.IsVirtual)
     {
         if (-Not (Test-Path "$env:ProgramFiles\Oracle\VirtualBox Guest Additions")) {
-            & "$scriptPath\Installs\Install-Virtualbox-Additions.ps1"
+            & "$scriptPath\Installs\Install-Virtualbox-Additions.ps1" *> "$outputPath\log-virtualization.log"
         }
         else {
             Write-BoxstarterMessage "Guest additions already installed."
@@ -91,13 +96,13 @@ if (!(Test-Path "$outputPath\reboot-apps.txt")) {
     Write-BoxstarterMessage "Installing apps"
 
     # Needed for sdelete64.exe later on
-    cmd /c "$env:ALLUSERSPROFILE\Chocolatey\choco.exe" install -y sysinternals
+    cinst sysinternals -y
 
     # Needed by numerous scripts to manage zip/iso files
-    cmd /c "$env:ALLUSERSPROFILE\Chocolatey\choco.exe" install -y 7zip.portable
+    cinst 7zip.portable -y
 
     # Needed as next step in provisioning (manually pull my DotFiles)
-    cmd /c "$env:ALLUSERSPROFILE\Chocolatey\choco.exe" install Git -y --package-parameters="'/GitAndUnixToolsOnPath /NoAutoCrlf /WindowsTerminal /NoShellIntegration'"
+    cinst Git -y --package-parameters="'/GitAndUnixToolsOnPath /NoAutoCrlf /WindowsTerminal /NoShellIntegration'"
 
     New-Item "$outputPath\reboot-apps.txt" -type file
     Invoke-Reboot
@@ -108,7 +113,10 @@ if (!(Test-Path "$outputPath\reboot-configurations.txt")) {
     Write-BoxstarterMessage "Writing configurations"
 
     Get-ChildItem "$scriptPath\Settings" -File -Filter "*.ps1" | Sort-Object "FullName" | Foreach-Object {
-        & "$_.FullName"
+        $script = $_.FullName
+        Write-BoxstarterMessage "Running script: $script"
+        & "$script" *> "$outputPath\log-settings-$_.log"
+        Start-Sleep 10
     }
 
     New-Item "$outputPath\reboot-configurations.txt" -type file
@@ -120,7 +128,10 @@ if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
     Write-BoxstarterMessage "Removing bloat"
 
     Get-ChildItem "$scriptPath\Bloat" -File -Filter "*.ps1" | Sort-Object "FullName" | Foreach-Object {
-        & "$_.FullName"
+        $script = $_.FullName
+        Write-BoxstarterMessage "Running script: $script"
+        & "$script" *> "$outputPath\log-bloat-$_.log"
+        Start-Sleep 10
     }
 
     New-Item "$outputPath\reboot-bloat.txt" -type file
@@ -128,7 +139,7 @@ if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
 }
 
 ### Phase 8 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
-if (!(Test-Path "$outputPath\reboot-clean.txt")) {
+if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Write-BoxstarterMessage "Cleaning up..."
 
     Write-BoxstarterMessage "Removing temp files"
@@ -172,7 +183,7 @@ if (!(Test-Path "$outputPath\reboot-clean.txt")) {
 if (!(Test-Path "$outputPath\reboot-winrm.txt")) {
     Write-BoxstarterMessage "Setting up WinRM"
 
-    & "$scriptPath\Installs\Setup-WinRm.ps1"
+    & "$scriptPath\Installs\Setup-WinRm.ps1" *> "$outputPath\log-winrm.log"
 
     Enable-UAC
 
@@ -192,9 +203,5 @@ if(Test-Path a:\postunattend.xml)
 
 Write-BoxstarterMessage "Set PowerShell policy"
 Update-ExecutionPolicy -Policy RemoteSigned
-
-#TODO: Validate if needed
-#Write-BoxstarterMessage "Disabling Auto Login"
-#New-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name "AutoAdminLogon" -Value "0" -PropertyType DWord
 
 Write-BoxstarterMessage "PROVISION COMPLETE!!!"

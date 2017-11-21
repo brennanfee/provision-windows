@@ -1,10 +1,10 @@
-function Pin-App 
-{ 
+function Pin-App
+{
     param(
         [string]$appname,
         [switch]$unpin
     )
-    try 
+    try
     {
         if ($unpin.IsPresent)
         {
@@ -19,7 +19,7 @@ function Pin-App
     }
     catch
     {
-        Write-Error "Error Pinning/Unpinning App! (App-Name correct?)"
+        Write-Error "Error Pinning/Unpinning App! (App-Name correct?) -> $appname"
     }
 }
 
