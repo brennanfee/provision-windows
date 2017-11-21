@@ -28,8 +28,6 @@ Version    : 1.0.0 11/11/2017 Brennan Fee
                 - First release
 Author     : Brennan Fee
 #>
-
-[cmdletBinding(SupportsShouldProcess = $true)]
 function Get-ComputerDetails {
 param(
     [parameter(Position=0, ValueFromPipeline=$true, HelpMessage="Computer or IP address of machine to test")]
@@ -38,6 +36,7 @@ param(
     [System.Management.Automation.PSCredential]$Credential = $null
 )
 
+$result = @()
 $wmibios = @()
 $wmisystem = @()
 
@@ -131,12 +130,13 @@ try
         }
     }
 
-    return New-Object PsObject -Property $ResultProps
+    $result += New-Object PsObject -Property $ResultProps
 }
 catch
 {
     Write-Warning "Cannot connect to $computer"
-    return @()
 }
+
+return $result
 
 }
