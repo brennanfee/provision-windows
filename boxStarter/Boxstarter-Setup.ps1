@@ -102,7 +102,7 @@ if (!(Test-Path "$outputPath\reboot-apps.txt")) {
     cinst 7zip.portable -y
 
     # Needed as next step in provisioning (manually pull my DotFiles)
-    cinst Git -y --package-parameters="'/GitAndUnixToolsOnPath /NoAutoCrlf /WindowsTerminal /NoShellIntegration'"
+    cinst Git -y --parameters="/GitAndUnixToolsOnPath /NoAutoCrlf /WindowsTerminal /NoShellIntegration"
 
     New-Item "$outputPath\reboot-apps.txt" -type file
     Invoke-Reboot
