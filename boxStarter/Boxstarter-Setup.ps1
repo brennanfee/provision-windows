@@ -73,8 +73,25 @@ if (!(Test-Path "$outputPath\reboot-updates-final.txt")) {
     Invoke-Reboot
 }
 
-### Phase 4 - Install Virtualization Tools, if necessary
-#TODO: Write support for other VM techs, at present only supports VirtualBox
+### Phase 5 - Base Applications
+if (!(Test-Path "$outputPath\reboot-apps.txt")) {
+    Write-BoxstarterMessage "Installing apps"
+
+    # Needed for sdelete64.exe later on
+    cinst sysinternals -y
+
+    # Needed by virtualization install scripts below
+    cinst 7zip.portable -y
+
+    # Needed as next step in provisioning (manually pull my DotFiles)
+    cinst Git -y --parameters="/GitAndUnixToolsOnPath /NoAutoCrlf /WindowsTerminal /NoShellIntegration"
+
+    New-Item "$outputPath\reboot-apps.txt" -type file
+    Invoke-Reboot
+}
+
+### Phase 6 - Install Virtualization Tools, if necessary
+#TODO: Write support for other VM techs, at present only supports VirtualBox - main priority would be Hyper-V
 if (!(Test-Path "$outputPath\reboot-virtualization.txt")) {
     Write-BoxstarterMessage "Checking if virtualization required..."
     if ($computerDetails.IsVirtual)
@@ -95,24 +112,7 @@ if (!(Test-Path "$outputPath\reboot-virtualization.txt")) {
     Invoke-Reboot
 }
 
-### Phase 5 - Base Applications
-if (!(Test-Path "$outputPath\reboot-apps.txt")) {
-    Write-BoxstarterMessage "Installing apps"
-
-    # Needed for sdelete64.exe later on
-    cinst sysinternals -y
-
-    # Needed by numerous scripts to manage zip/iso files
-    cinst 7zip.portable -y
-
-    # Needed as next step in provisioning (manually pull my DotFiles)
-    cinst Git -y --parameters="/GitAndUnixToolsOnPath /NoAutoCrlf /WindowsTerminal /NoShellIntegration"
-
-    New-Item "$outputPath\reboot-apps.txt" -type file
-    Invoke-Reboot
-}
-
-### Phase 6 - Main configurations (registry tweaks, settings, etc.)
+### Phase 7 - Main configurations (registry tweaks, settings, etc.)
 if (!(Test-Path "$outputPath\reboot-configurations.txt")) {
     Write-BoxstarterMessage "Writing configurations"
 
@@ -127,7 +127,7 @@ if (!(Test-Path "$outputPath\reboot-configurations.txt")) {
     Invoke-Reboot
 }
 
-### Phase 7 - Remove Windows bloat (uninstall, remove things I don't want)
+### Phase 8 - Remove Windows bloat (uninstall, remove things I don't want)
 if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
     Write-BoxstarterMessage "Removing bloat"
 
@@ -142,7 +142,7 @@ if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
     Invoke-Reboot
 }
 
-### Phase 8 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
+### Phase 9 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
 if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Write-BoxstarterMessage "Cleaning up..."
 
@@ -176,14 +176,19 @@ if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Remove-Item $UsersDesktopPath
     Remove-Item "$env:Public\Desktop\*.lnk"
 
-    Write-BoxstarterMessage "Zeroing out empty space..."
-    cmd /c "$env:ALLUSERSPROFILE\chocolatey\bin\sdelete64.exe" /accepteula -z "$env:SystemDrive"
+    # Only do the following if we are on a VM, we want to zero out space so we can compact the VM
+    # It takes a LONG time so skip it on physical machines
+    if ($computerDetails.IsVirtual)
+    {
+        Write-BoxstarterMessage "Zeroing out empty space..."
+        cmd /c "$env:ALLUSERSPROFILE\chocolatey\bin\sdelete64.exe" /accepteula -z "$env:SystemDrive"
+    }
 
     New-Item "$outputPath\reboot-clean.txt" -type file
     Invoke-Reboot
 }
 
-### Phase 9 - Setup WinRM
+### Phase 10 - Setup WinRM
 if (!(Test-Path "$outputPath\reboot-winrm.txt")) {
     Write-BoxstarterMessage "Setting up WinRM"
 
