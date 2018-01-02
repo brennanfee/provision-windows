@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 <#
 .SYNOPSIS
 Install my selection of optional windows features.
@@ -59,7 +61,7 @@ Enable-WindowsOptionalFeature -FeatureName IIS-HostableWebCore -Online -All -Lim
 Enable-WindowsOptionalFeature -FeatureName NetFx4Extended-ASPNET45 -Online -All -LimitAccess -NoRestart
 Enable-WindowsOptionalFeature -FeatureName RasRip -Online -All -LimitAccess -NoRestart
 Enable-WindowsOptionalFeature -FeatureName TelnetClient -Online -All -LimitAccess -NoRestart
-Enable-WindowsOptionalFeature -FeatureName TFTP -Online -All -LimitAccess -NoRestart    
+Enable-WindowsOptionalFeature -FeatureName TFTP -Online -All -LimitAccess -NoRestart
 Enable-WindowsOptionalFeature -FeatureName TIFFIFilter -Online -All -LimitAccess -NoRestart
 Enable-WindowsOptionalFeature -FeatureName ServicesForNFS-ClientOnly -Online -All -LimitAccess -NoRestart
 Enable-WindowsOptionalFeature -FeatureName ClientForNFS-Infrastructure -Online -All -LimitAccess -NoRestart
@@ -90,7 +92,7 @@ if ($Configuration -eq 'Developer') {
     Enable-WindowsOptionalFeature -FeatureName WAS-ProcessModel -Online -All -LimitAccess -NoRestart
     Enable-WindowsOptionalFeature -FeatureName WAS-ConfigurationAPI -Online -All -LimitAccess -NoRestart
     Enable-WindowsOptionalFeature -FeatureName WCF-HTTP-Activation45 -Online -All -LimitAccess -NoRestart
-    Enable-WindowsOptionalFeature -FeatureName WCF-TCP-Activation45 -Online -All -LimitAccess -NoRestart    
+    Enable-WindowsOptionalFeature -FeatureName WCF-TCP-Activation45 -Online -All -LimitAccess -NoRestart
     Enable-WindowsOptionalFeature -FeatureName IIS-StaticContent -Online -All -LimitAccess -NoRestart
     Enable-WindowsOptionalFeature -FeatureName IIS-DefaultDocument -Online -All -LimitAccess -NoRestart
     Enable-WindowsOptionalFeature -FeatureName IIS-DirectoryBrowsing -Online -All -LimitAccess -NoRestart

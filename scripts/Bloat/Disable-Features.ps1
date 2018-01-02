@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 Import-Module -DisableNameChecking "$PSScriptRoot\..\Utilities\FileAndRegistryUtilities.psm1"
 
 # Disable Bing Search

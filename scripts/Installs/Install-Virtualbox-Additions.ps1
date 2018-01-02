@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 Write-Host "Installing guest additions..."
 cmd /c "$env:ALLUSERSPROFILE\Chocolatey\choco.exe" install -y 7zip.portable
 

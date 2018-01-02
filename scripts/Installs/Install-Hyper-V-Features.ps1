@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 <#
 .SYNOPSIS
 Install the Hyper-V features on Windows 10.

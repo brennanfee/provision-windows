@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 ## Registry
 function Set-RegistryInt($key, $valueName, $value) {
     Set-RegistryValue $key $valueName $value DWord

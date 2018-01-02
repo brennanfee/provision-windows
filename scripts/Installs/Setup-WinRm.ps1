@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 #TODO: Make a secure version of this, have a param passed to this script to decide secure or 'open'
 Write-Host "Setup network connections"
 Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private

@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 $ProgressPreference="SilentlyContinue"
 $Boxstarter.RebootOk=$true
 

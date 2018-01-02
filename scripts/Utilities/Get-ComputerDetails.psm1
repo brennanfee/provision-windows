@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 <#
 .SYNOPSIS
 Returns some details on the given machine.  Includes whether the machine is virtual and/or a laptop.

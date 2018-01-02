@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 # Removes some of the apps that come by default but are generally not needed.
 
 $apps = @(
@@ -68,7 +70,7 @@ foreach ($app in $apps) {
     Write-Host "Trying to remove $app"
 
     Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage
-    
+
     Get-AppXProvisionedPackage -Online |
         Where-Object DisplayName -EQ $app |
         Remove-AppxProvisionedPackage -Online

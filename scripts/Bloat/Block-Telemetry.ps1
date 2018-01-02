@@ -1,4 +1,5 @@
-#   Description:
+#!/usr/bin/env powershell.exe
+
 # This script attempts to block much of the telemetry related domains via the hosts file and related
 # IPs via Windows Firewall.
 #

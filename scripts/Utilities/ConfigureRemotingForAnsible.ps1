@@ -1,4 +1,5 @@
-#Requires -Version 3.0
+#!/usr/bin/env powershell.exe
+#Requires -Version 3
 
 # Configure a Windows host for remote management with Ansible
 # -----------------------------------------------------------

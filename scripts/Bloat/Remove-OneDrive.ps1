@@ -1,3 +1,5 @@
+#!/usr/bin/env powershell.exe
+
 # This script will remove and disable OneDrive integration.
 
 Import-Module -DisableNameChecking $PSScriptRoot\..\Utilities\FileAndRegistryUtilities.psm1
