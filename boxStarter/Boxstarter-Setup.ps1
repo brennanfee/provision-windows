@@ -112,22 +112,7 @@ if (!(Test-Path "$outputPath\reboot-virtualization.txt")) {
     Invoke-Reboot
 }
 
-### Phase 7 - Main configurations (registry tweaks, settings, etc.)
-if (!(Test-Path "$outputPath\reboot-configurations.txt")) {
-    Write-BoxstarterMessage "Writing configurations"
-
-    Get-ChildItem "$scriptPath\Settings" -File -Filter "*.ps1" | Sort-Object "FullName" | Foreach-Object {
-        $script = $_.FullName
-        Write-BoxstarterMessage "Running script: $script"
-        & "$script" *> "$outputPath\log-settings-$_.log"
-        Start-Sleep 3
-    }
-
-    New-Item "$outputPath\reboot-configurations.txt" -type file
-    Invoke-Reboot
-}
-
-### Phase 8 - Remove Windows bloat (uninstall, remove things I don't want)
+### Phase 7 - Remove Windows bloat (uninstall, remove things I don't want)
 if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
     Write-BoxstarterMessage "Removing bloat"
 
@@ -142,7 +127,7 @@ if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
     Invoke-Reboot
 }
 
-### Phase 9 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
+### Phase 8 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
 if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Write-BoxstarterMessage "Cleaning up..."
 
@@ -188,7 +173,7 @@ if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Invoke-Reboot
 }
 
-### Phase 10 - Setup WinRM
+### Phase 9 - Setup WinRM
 if (!(Test-Path "$outputPath\reboot-winrm.txt")) {
     Write-BoxstarterMessage "Setting up WinRM"
 
