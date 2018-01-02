@@ -53,6 +53,10 @@ if (!(Test-Path "$outputPath\reboot-features.txt")) {
 
     # My list of features
     & "$scriptPath\Installs\Install-Optional-Windows-Features.ps1" -Configuration Developer *> "$outputPath\log-features.log"
+    if (!($computerDetails.IsVirtual))
+    {
+        & "$scriptPath\Installs\Install-Hyper-V-Features.ps1" -Configuration Developer *> "$outputPath\log-features-hyper-v.log"
+    }
 
     New-Item "$outputPath\reboot-features.txt" -type file
     Invoke-Reboot
