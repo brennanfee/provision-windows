@@ -9,8 +9,6 @@ $Boxstarter.RebootOk=$true
 # Download some helper scripts, these will stay permanantly on the machine
 # I put these files into two locations, one is only for provision scripts the other is for shared powershell scripts.
 
-# URL: http://boxstarter.org/package/url?https://git.io/vF5zn
-
 Update-ExecutionPolicy -Policy Unrestricted
 
 # Set up some global variables
@@ -23,7 +21,7 @@ $scriptPath = "$extractRoot\provision-windows-master\scripts"
 if (!(Test-Path "$extractRoot\provision-windows-master\README.md")) {
     # Download the master branch
     $zipFile = "$env:TEMP\provision-windows.zip"
-    iwr https://github.com/brennanfee/provision-windows/archive/master.zip -UseBasicParsing -o $zipFile
+    Invoke-WebRequest https://github.com/brennanfee/provision-windows/archive/master.zip -UseBasicParsing -o $zipFile
 
     # Extract it
     Expand-Archive $zipFile -DestinationPath $extractRoot
@@ -93,7 +91,7 @@ if (!(Test-Path "$outputPath\reboot-apps.txt")) {
 }
 
 ### Phase 6 - Install Virtualization Tools, if necessary
-#TODO: Write support for other VM techs, at present only supports VirtualBox - main priority would be Hyper-V
+#TODO: Write support for other VM techs, at present only supports VirtualBox - main priority would be Hyper-V and then kvm
 if (!(Test-Path "$outputPath\reboot-virtualization.txt")) {
     Write-BoxstarterMessage "Checking if virtualization required..."
     if ($computerDetails.IsVirtual)
@@ -129,7 +127,22 @@ if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
     Invoke-Reboot
 }
 
-### Phase 8 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
+### Phase 8 - Run the "other" scripts - this serves as an extension point
+if (!(Test-Path "$outputPath\reboot-other.txt")) {
+    Write-BoxstarterMessage "Running other scripts"
+
+    Get-ChildItem "$scriptPath\Other" -File -Filter "*.ps1" | Sort-Object "FullName" | Foreach-Object {
+        $script = $_.FullName
+        Write-BoxstarterMessage "Running script: $script"
+        & "$script" *> "$outputPath\log-other-$_.log"
+        Start-Sleep 3
+    }
+
+    New-Item "$outputPath\reboot-other.txt" -type file
+    Invoke-Reboot
+}
+
+### Phase 9 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
 if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Write-BoxstarterMessage "Cleaning up..."
 
@@ -175,7 +188,7 @@ if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Invoke-Reboot
 }
 
-### Phase 9 - Setup WinRM
+### Phase 10 - Setup WinRM
 if (!(Test-Path "$outputPath\reboot-winrm.txt")) {
     Write-BoxstarterMessage "Setting up WinRM"
 
