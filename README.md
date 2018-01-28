@@ -10,15 +10,15 @@ This repo contains a "main" BoxStarter script which can be bootstrapped by BoxSt
 
 If you fork this repository you will need to follow the steps described blow in the section [Steps to set up your own fork](README.md#steps-to-set-up-your-own-fork) which includes using a different URL after the `?` above.
 
-This will first prompt for security permissions and then for the account password needed for reboots to occur.  After a LONG while and many reboots (thanks Microsoft! :rage:) the machine should have the base needed to proceed with further setup and installation(s).
+When executed, BoxStarter will first prompt for security permissions and then for the account password needed for reboots to occur.  After a **LONG** while and many reboots (thanks Microsoft! :rage:) the machine should have the base needed to proceed with further setup and installation(s).
 
 ## Steps after provisioning
 
-As I have configured here, a number of extra windows features are turned on and a few "universal" applications are installed.  At present, I don't use this script to "fully" configure my machines and install *every* application or system setting I might want to use.  Essentially this script includes anything that requires reboot resiliency and lots of time (like Windows Updates) or anything that I would put on every Windows machine regardless of desired purpose for the machine (such as Google Chrome).  This serves as a proper "base" not a fully configured machine.  Of course, you could change\extend the setup as described elsewhere in this document in order to accomplish that.
+As I have configured here, a number of extra windows features are turned on, some Microsoft provided "bloatware" is removed, and a few "universal" applications are installed.  At present, I don't use this script to "fully" configure my machines and install *every* application or system setting I might want to use.  Essentially this script includes anything that requires reboot resiliency and lots of time (like Windows Updates) or anything that I would put on every Windows machine regardless of desired purpose for the machine (such as Google Chrome).  This serves as a proper "base" not a fully configured machine.  Of course, you could change\extend the setup as described elsewhere in this document in order to accomplish that.
 
 After running this bootstrap script you can then use [Chocolatey](https://chocolatey.org) and/or PowerShell to install further applications and adjust settings.
 
-Personally, I use a second repository called [WinFiles](https://github.com/brennanfee/winfiles) to house my system settings and application settings (sort of like a [dotfiles](https://dotfiles.github.io/) repository for Linux but for Windows).  I also put PowerShell scripts in that repository to automate the installation of the rest of my preferred system settings and applications that this bootstrap script does not include.  On top of all that, my [WinFiles](https://github.com/brennanfee/winfiles) repository includes my Linux [dotfiles](https://github.com/brennanfee/dotfiles) as a submodule repository in order to share some settings files across all of my machines whether Windows, Mac, or Linux (such as my Vim settings).
+Personally, I use a second repository called [WinFiles](https://github.com/brennanfee/winfiles) to house my system settings and application settings (sort of like a [dotfiles](https://dotfiles.github.io/) repository for Linux but for Windows).  I also put PowerShell scripts in that repository to automate the installation of the rest of my preferred system settings and applications that this bootstrap script does not include.  On top of all that, my [WinFiles](https://github.com/brennanfee/winfiles) repository includes [my Linux dotfiles](https://github.com/brennanfee/dotfiles) as a submodule repository in order to share some settings files across all of my machines whether Windows, Mac, or Linux (such as my Vim settings).
 
 ## Project Structure
 
@@ -26,9 +26,9 @@ The main BoxStarter script is found in [BoxStarter-Setup.ps1](boxStarter/Boxstar
 
 The scripts in the [Installs](scripts/Installs) folder are called directly by [BoxStarter-Setup.ps1](boxStarter/Boxstarter-Setup.ps1).  So adding a file to that directory requires an update to that script.
 
-The scripts in [Bloat](scripts\Bloat) and [Other](scripts\Other), however, are all called in sequence so simply adding a new file in that folder (with a ps1 extension) means it will get called automatically.  \[Note that the [Bloat](scripts\Bloat) folder is targeted toward removing windows bloat software, such as OneDrive.  The [Other](scripts\Other) folder is reserved as an extension point.\]
+The scripts in [Bloat](scripts/Bloat) and [Other](scripts/Other), however, are all called in sequence so simply adding a new file in that folder means it will get called automatically (the file must have a ps1 extension).  \[Note that the [Bloat](scripts/Bloat) folder is targeted toward removing windows bloat software, such as OneDrive.  The [Other](scripts/Other) folder is reserved as an extension point.\]
 
-The file [chocolatey-packages.config](scripts/chocolatey-packages.config) houses the list of Chocolatey provided applications to install.  This list of applications is installed **before** the [Other](scripts\Other) scripts are run so the installation of the applications can be assumed in the [Other](scripts\Other) scripts.
+The file [chocolatey-packages.config](scripts/chocolatey-packages.config) houses the list of Chocolatey provided applications to install.  This list of applications is installed **before** the [Other](scripts/Other) scripts are run so the installation of the applications can be assumed in the [Other](scripts/Other) scripts.
 
 ### List of default applications
 
@@ -52,7 +52,7 @@ After forking this repository here are the minimum steps you should perform to h
 1. Get the raw content URL to the [BoxStarter-Setup.ps1](boxStarter/Boxstarter-Setup.ps1) script for your repo.
 1. Update this README to modify the URL in the START command above. Simply replace the URL after the `?` symbol to point to your script (use a URL shortener if desired).
 1. Modify the [chocolatey-packages.config](scripts/chocolatey-packages.config) file to install your desired applications.
-1. Add any extra scripts you wish to the [Other](scripts\Other) folder.
+1. Add any extra scripts you wish to the [Other](scripts/Other) folder.
 1. Modify any of the other scripts to adjust to your own liking (be careful here as some may be necessary for successful completion).
 1. Test provisioning a machine and verify you get the results you want.
 
