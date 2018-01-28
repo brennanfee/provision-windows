@@ -1,4 +1,5 @@
 #!/usr/bin/env powershell.exe
+#Requires -Version 5
 
 ## Registry
 function Set-RegistryInt($key, $valueName, $value) {
@@ -78,4 +79,28 @@ function Takeown-Folder($path) {
             Takeown-File $item.FullName
         }
     }
+}
+
+# Symbolic links
+
+function Make-Link-Safe($link, $target)
+{
+    # This version will not do anything if the a link or file already exists
+    # at the link point
+    If (!(Test-Path("$link")))
+    {
+        cmd /c mklink "$link" "$target"
+    }
+}
+
+function Make-Link($link, $target)
+{
+    # This version will first remove the link or file if it exists and will
+    # then re-create the link
+    If (Test-Path("$link"))
+    {
+        Remove-Item -Path "$link"
+    }
+
+    cmd /c mklink "$link" "$target"
 }

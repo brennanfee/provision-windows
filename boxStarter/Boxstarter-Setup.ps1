@@ -21,7 +21,7 @@ $scriptPath = "$extractRoot\provision-windows-master\scripts"
 if (!(Test-Path "$extractRoot\provision-windows-master\README.md")) {
     # Download the master branch
     $zipFile = "$env:TEMP\provision-windows.zip"
-    Invoke-WebRequest https://github.com/brennanfee/provision-windows/archive/master.zip -UseBasicParsing -o $zipFile
+    Invoke-WebRequest "https://github.com/brennanfee/provision-windows/archive/master.zip" -UseBasicParsing -o $zipFile
 
     # Extract it
     Expand-Archive $zipFile -DestinationPath $extractRoot
@@ -37,7 +37,6 @@ $computerDetails = Get-ComputerDetails
 if (!(Test-Path "$outputPath\reboot-updates.txt")) {
     # The boxstarter commands
     Enable-RemoteDesktop
-    Enable-MicrosoftUpdate
 
     Write-BoxstarterMessage "Install Windows Updates"
     Install-WindowsUpdate -AcceptEula
@@ -77,11 +76,14 @@ if (!(Test-Path "$outputPath\reboot-updates-final.txt")) {
 if (!(Test-Path "$outputPath\reboot-prereqs.txt")) {
     Write-BoxstarterMessage "Installing prerequisites"
 
-    # Needed for sdelete64.exe later on
-    cinst sysinternals -y
+    if ($computerDetails.IsVirtual)
+    {
+        # Needed for sdelete64.exe later on
+        cinst sysinternals -y
 
-    # Needed by virtualization install scripts below
-    cinst 7zip.portable -y
+        # Needed by virtualization install scripts below
+        cinst 7zip.portable -y
+    }
 
     # Needed after installation to install other applications
     cinst chocolatey -y
@@ -137,7 +139,22 @@ if (!(Test-Path "$outputPath\reboot-apps.txt")) {
     Invoke-Reboot
 }
 
-### Phase 9 - Run the "other" scripts - this serves as an extension point
+### Phase 9 - Run the "settings" scripts
+if (!(Test-Path "$outputPath\reboot-settings.txt")) {
+    Write-BoxstarterMessage "Running settings scripts"
+
+    Get-ChildItem "$scriptPath\Settings" -File -Filter "*.ps1" | Sort-Object "FullName" | Foreach-Object {
+        $script = $_.FullName
+        Write-BoxstarterMessage "Running script: $script"
+        & "$script" *> "$outputPath\log-settings-$_.log"
+        Start-Sleep 3
+    }
+
+    New-Item "$outputPath\reboot-settings.txt" -type file
+    Invoke-Reboot
+}
+
+### Phase 10 - Run the "other" scripts - this serves as an extension point for others
 if (!(Test-Path "$outputPath\reboot-other.txt")) {
     Write-BoxstarterMessage "Running other scripts"
 
@@ -152,7 +169,7 @@ if (!(Test-Path "$outputPath\reboot-other.txt")) {
     Invoke-Reboot
 }
 
-### Phase 10 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
+### Phase 11 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
 if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Write-BoxstarterMessage "Cleaning up..."
 
@@ -198,13 +215,15 @@ if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Invoke-Reboot
 }
 
-### Phase 11 - Setup WinRM
+### Phase 12 - Setup WinRM & Final Settings
 if (!(Test-Path "$outputPath\reboot-winrm.txt")) {
     Write-BoxstarterMessage "Setting up WinRM"
 
     & "$scriptPath\Installs\Setup-WinRm.ps1" *> "$outputPath\log-winrm.log"
 
     Enable-UAC
+    Enable-RemoteDesktop
+    Enable-MicrosoftUpdate
 
     New-Item "$outputPath\reboot-winrm.txt" -type file
     Invoke-Reboot
@@ -212,8 +231,8 @@ if (!(Test-Path "$outputPath\reboot-winrm.txt")) {
 
 ### ABOVE WAS LAST REBOOT - All below is to prepare for SysPrep (if needed)
 
-# If an automated install and there is an post-unattend file, copy it locally
-if(Test-Path a:\postunattend.xml)
+# If an automated install and there is a post-unattend file, copy it locally
+if (Test-Path a:\postunattend.xml)
 {
     Write-BoxstarterMessage "Copy unattend scripts to local drive..."
     New-Item "$env:SYSTEMROOT\Panther\Unattend" -type directory
@@ -223,4 +242,4 @@ if(Test-Path a:\postunattend.xml)
 Write-BoxstarterMessage "Set PowerShell policy"
 Update-ExecutionPolicy -Policy RemoteSigned
 
-Write-BoxstarterMessage "PROVISION COMPLETE!!!"
+Write-BoxstarterMessage "PROVISION COMPLETE!!! Please reboot."
