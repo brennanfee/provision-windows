@@ -73,9 +73,9 @@ if (!(Test-Path "$outputPath\reboot-updates-final.txt")) {
     Invoke-Reboot
 }
 
-### Phase 5 - Base Applications
-if (!(Test-Path "$outputPath\reboot-apps.txt")) {
-    Write-BoxstarterMessage "Installing apps"
+### Phase 5 - Prerequisite Applications
+if (!(Test-Path "$outputPath\reboot-prereqs.txt")) {
+    Write-BoxstarterMessage "Installing prerequisites"
 
     # Needed for sdelete64.exe later on
     cinst sysinternals -y
@@ -83,10 +83,10 @@ if (!(Test-Path "$outputPath\reboot-apps.txt")) {
     # Needed by virtualization install scripts below
     cinst 7zip.portable -y
 
-    # Needed as next step in provisioning (manually pull my DotFiles)
-    cinst Git -y --parameters="/GitAndUnixToolsOnPath /NoAutoCrlf /WindowsTerminal /NoShellIntegration"
+    # Needed after installation to install other applications
+    cinst chocolatey -y
 
-    New-Item "$outputPath\reboot-apps.txt" -type file
+    New-Item "$outputPath\reboot-prereqs.txt" -type file
     Invoke-Reboot
 }
 
@@ -127,7 +127,17 @@ if (!(Test-Path "$outputPath\reboot-bloat.txt")) {
     Invoke-Reboot
 }
 
-### Phase 8 - Run the "other" scripts - this serves as an extension point
+### Phase 8 - Install Applications
+if (!(Test-Path "$outputPath\reboot-apps.txt")) {
+    Write-BoxstarterMessage "Installing applications"
+
+    cinst "$scriptPath\chocolatey-packages.config" -y
+
+    New-Item "$outputPath\reboot-apps.txt" -type file
+    Invoke-Reboot
+}
+
+### Phase 9 - Run the "other" scripts - this serves as an extension point
 if (!(Test-Path "$outputPath\reboot-other.txt")) {
     Write-BoxstarterMessage "Running other scripts"
 
@@ -142,7 +152,7 @@ if (!(Test-Path "$outputPath\reboot-other.txt")) {
     Invoke-Reboot
 }
 
-### Phase 9 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
+### Phase 10 - Clean up (this is mostly to prepare for VM shrink and/or a SysPrep)
 if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Write-BoxstarterMessage "Cleaning up..."
 
@@ -188,7 +198,7 @@ if (!$debug -and !(Test-Path "$outputPath\reboot-clean.txt")) {
     Invoke-Reboot
 }
 
-### Phase 10 - Setup WinRM
+### Phase 11 - Setup WinRM
 if (!(Test-Path "$outputPath\reboot-winrm.txt")) {
     Write-BoxstarterMessage "Setting up WinRM"
 
