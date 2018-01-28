@@ -37,7 +37,7 @@ Here is the list of applications that are installed by default.
 * Git - A source control\version control management utility.  Needed immediately after install to get my [WinFiles](https://github.com/brennanfee/winfiles).
 * Which - A command line utility that mirrors the Linux `which` command.
 * VLC - A popular media player (audio and video).
-* Google Chrome - **THE** web browser because who still uses IE!?!
+* Google Chrome - **THE** web browser because who still uses IE right!?!
 
 The following other applications are installed and are required as part of this scripts setup.
 
