@@ -1,5 +1,9 @@
 # provision-windows
 
+**ATTENTION:** This repository is now defunct.  I have moved all Windows provisioning scripts\steps\settings to my [Winfiles](https://github.com/brennanfee/winfiles) repository.  It is simpler and more self-contained.
+
+---
+
 This is a [BoxStarter](http://boxstarter.org) based set of scripts for provisioning my Windows machines (both personal and work related).
 
 ## Steps to provision
